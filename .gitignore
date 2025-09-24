@@ -1,0 +1,11 @@
+# .gitignore
+bin/
+*.exe
+*.out
+*.log
+.env
+.env.*
+/vendor/
+/.idea/
+/.vscode/
+.DS_Store
