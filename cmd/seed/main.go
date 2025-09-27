@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
+	"time"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -23,33 +25,68 @@ func main() {
 		log.Fatalf("db connect error: %v", err)
 	}
 
-	// seed user
-	hash, _ := password.Hash("secret123")
-	admin := domain.User{Username: "admin", Password: hash, Role: "admin"}
-	db.Where("username = ?", admin.Username).FirstOrCreate(&admin)
+	// seed users
+	users := []struct {
+		Username string
+		Password string
+		Role     string
+	}{
+		{"cole", "password", "user"},
+		{"brian", "password", "user"},
+		{"alice", "password", "user"},
+	}
+	for _, u := range users {
+		hash, _ := password.Hash(u.Password)
+		user := domain.User{Username: u.Username, Password: hash, Role: u.Role}
+		db.Where("username = ?", user.Username).FirstOrCreate(&user)
+	}
+
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	categories := []string{"men", "women", "bag", "electronics", "accessories"}
 
 	// seed products
-	products := []domain.Product{
-		{Name: "Sneaker Alpha", Category: "men", Price: 799000, Description: "Lightweight men sneaker"},
-		{Name: "Sneaker Beta", Category: "women", Price: 899000, Description: "Comfortable women sneaker"},
-		{Name: "Backpack Pro", Category: "bag", Price: 499000, Description: "Durable backpack"},
-	}
-	imageData := [][]domain.Image{
-		{{URL: "https://picsum.photos/seed/alpha/600/400", IsThumbnail: true}, {URL: "https://picsum.photos/seed/alpha2/600/400"}},
-		{{URL: "https://picsum.photos/seed/beta/600/400", IsThumbnail: true}, {URL: "https://picsum.photos/seed/beta2/600/400"}},
-		{{URL: "https://picsum.photos/seed/bag/600/400", IsThumbnail: true}, {URL: "https://picsum.photos/seed/bag2/600/400"}},
-	}
+	for i := 1; i <= 100; i++ {
+		name := fmt.Sprintf("Product %03d", i)
+		category := categories[r.Intn(len(categories))]
+		price := int64(100000 + r.Intn(900000))
+		desc := fmt.Sprintf("Description for %s in category %s", name, category)
 
-	for i := range products {
-		db.Where("name = ?", products[i].Name).FirstOrCreate(&products[i])
-		for _, img := range imageData[i] {
-			img.ProductID = products[i].ID
-			db.Where("product_id=? AND url=?", img.ProductID, img.URL).FirstOrCreate(&domain.Image{ProductID: img.ProductID, URL: img.URL, IsThumbnail: img.IsThumbnail})
+		p := domain.Product{
+			Name:        name,
+			Category:    category,
+			Price:       price,
+			Description: desc,
+		}
+		db.Where("name = ?", p.Name).FirstOrCreate(&p)
+
+		// Thumbnail + 2 detail images
+		thumb := domain.Image{
+			ProductID:   p.ID,
+			URL:         fmt.Sprintf("https://picsum.photos/seed/thumb-%d/600/400", i),
+			IsThumbnail: true,
+		}
+		db.Where("product_id = ? AND url = ?", thumb.ProductID, thumb.URL).
+			FirstOrCreate(&thumb)
+
+		for j := 1; j <= 2; j++ {
+			img := domain.Image{
+				ProductID:   p.ID,
+				URL:         fmt.Sprintf("https://picsum.photos/seed/detail-%d-%d/600/400", i, j),
+				IsThumbnail: false,
+			}
+			db.Where("product_id = ? AND url = ?", img.ProductID, img.URL).
+				FirstOrCreate(&img)
 		}
 	}
 
-	var count int64
-	db.Model(&domain.Product{}).Count(&count)
-	out, _ := json.MarshalIndent(map[string]any{"users": 1, "products": count}, "", "  ")
+	// summary
+	var userCount, productCount int64
+	db.Model(&domain.User{}).Count(&userCount)
+	db.Model(&domain.Product{}).Count(&productCount)
+
+	out, _ := json.MarshalIndent(map[string]any{
+		"users":    userCount,
+		"products": productCount,
+	}, "", "  ")
 	fmt.Println(string(out))
 }
