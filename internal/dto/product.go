@@ -1,9 +1,9 @@
 package dto
 
 type ProductQuery struct {
-	Page     int
-	PageSize int
-	Name     string
-	Category string
-	Search   string
+	Page     int    `json:"page"`
+	PageSize int    `json:"page_size"`
+	Name     string `json:"name"`
+	Category string `json:"category"`
+	Search   string `search:"search"`
 }

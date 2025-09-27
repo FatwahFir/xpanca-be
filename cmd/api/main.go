@@ -50,10 +50,12 @@ func main() {
 	//REPO
 	userRepo := mysqlrepo.NewUserRepo(db)
 	productRepo := mysqlrepo.NewProductRepo(db)
+	cartRepo := mysqlrepo.NewCartRepository(db)
 
 	//USECASE
 	authUsecase := usecase.NewAuthUsecase(userRepo, jwtm)
 	ProductUsecase := usecase.NewProductUsecase(productRepo)
+	cartUsecase := usecase.NewCartUsecase(cartRepo)
 
 	httpadapter.NewAuthHandler(v1, authUsecase)
 
@@ -63,6 +65,7 @@ func main() {
 
 	authGroup.Use(middleware.JWTAuth(jwtm))
 	httpadapter.NewProductHandler(authGroup, ProductUsecase)
+	httpadapter.NewCartHandler(authGroup, cartUsecase)
 
 	log.Printf("listening on :%s", cfg.AppPort)
 	if err := r.Run(":" + cfg.AppPort); err != nil {
