@@ -8,7 +8,6 @@ import (
 	"github.com/FatwahFir/xpanca-be/internal/usecase"
 	"github.com/FatwahFir/xpanca-be/pkg/response"
 	"github.com/FatwahFir/xpanca-be/utils"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -33,8 +32,11 @@ func (h *ProductHandler) List(c *gin.Context) {
 		response.Err(c, http.StatusInternalServerError, response.CodeServerError, err.Error(), nil)
 		return
 	}
+
+	dtoItems := dto.ToProductListResponse(items)
 	totalPages := (total + int64(q.PageSize) - 1) / int64(q.PageSize)
-	response.Paginated(c, items, response.Pagination{
+
+	response.Paginated(c, dtoItems, response.Pagination{
 		Page: q.Page, PageSize: q.PageSize, Total: total, TotalPages: totalPages,
 	})
 }
@@ -46,5 +48,6 @@ func (h *ProductHandler) Detail(c *gin.Context) {
 		response.Err(c, http.StatusNotFound, response.CodeNotFound, "product not found", nil)
 		return
 	}
-	response.OK(c, p)
+
+	response.OK(c, dto.ToProductResponse(*p))
 }

@@ -6,7 +6,6 @@ import (
 	"github.com/FatwahFir/xpanca-be/internal/dto"
 	"github.com/FatwahFir/xpanca-be/internal/usecase"
 	"github.com/FatwahFir/xpanca-be/pkg/response"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -32,5 +31,9 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		response.Err(c, http.StatusInternalServerError, response.CodeServerError, "cannot issue token", nil)
 		return
 	}
-	response.OK(c, gin.H{"token": token, "user": u})
+
+	response.OK(c, gin.H{
+		"token": token,
+		"user":  dto.ToUserResponse(*u),
+	})
 }
