@@ -8,5 +8,6 @@ type LoginReq struct {
 type UserResponse struct {
 	ID       uint   `json:"id"`
 	Username string `json:"username"`
+	password string `json:"-"`
 	Role     string `json:"role"`
 }
