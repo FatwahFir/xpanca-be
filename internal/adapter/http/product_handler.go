@@ -26,6 +26,7 @@ func (h *ProductHandler) List(c *gin.Context) {
 		Name:     c.Query("name"),
 		Category: c.Query("category"),
 		Search:   c.Query("search"),
+		Sort:     c.Query("sort"),
 	}
 	items, total, err := h.UC.Find(c, q)
 	if err != nil {

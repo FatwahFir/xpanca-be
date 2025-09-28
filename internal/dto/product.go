@@ -7,7 +7,8 @@ type ProductQuery struct {
 	PageSize int    `json:"page_size"`
 	Name     string `json:"name"`
 	Category string `json:"category"`
-	Search   string `search:"search"`
+	Search   string `json:"search"`
+	Sort     string `json:"sort"`
 }
 
 type ProductResponse struct {

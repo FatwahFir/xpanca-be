@@ -6,7 +6,6 @@ import (
 
 	"github.com/FatwahFir/xpanca-be/internal/domain"
 	"github.com/FatwahFir/xpanca-be/internal/dto"
-
 	"gorm.io/gorm"
 )
 
@@ -25,6 +24,7 @@ func (r *productRepositoryImpl) Find(ctx context.Context, q dto.ProductQuery) ([
 
 	query := r.db.WithContext(ctx).Model(&domain.Product{}).Preload("Images")
 
+	// filters
 	if q.Name != "" {
 		query = query.Where("LOWER(name) LIKE ?", "%"+strings.ToLower(q.Name)+"%")
 	}
@@ -40,6 +40,7 @@ func (r *productRepositoryImpl) Find(ctx context.Context, q dto.ProductQuery) ([
 		return nil, 0, err
 	}
 
+	// pagination guard
 	page := q.Page
 	if page <= 0 {
 		page = 1
@@ -50,7 +51,22 @@ func (r *productRepositoryImpl) Find(ctx context.Context, q dto.ProductQuery) ([
 	}
 	offset := (page - 1) * size
 
-	if err := query.Limit(size).Offset(offset).Order("id DESC").Find(&products).Error; err != nil {
+	// sorting whitelist
+	order := strings.ToLower(strings.TrimSpace(q.Sort))
+	switch order {
+	case "name_asc":
+		query = query.Order("name ASC")
+	case "name_desc":
+		query = query.Order("name DESC")
+	case "price_asc":
+		query = query.Order("price ASC")
+	case "price_desc":
+		query = query.Order("price DESC")
+	default:
+		query = query.Order("id DESC")
+	}
+
+	if err := query.Limit(size).Offset(offset).Find(&products).Error; err != nil {
 		return nil, 0, err
 	}
 	return products, total, nil
